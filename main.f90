@@ -4,14 +4,16 @@ program main
    use cartesian_mesh
    use flux
    use solver
+   use initial_condition
    use vtk
 
    implicit none
 
    ! Déclaration des variables
-   integer :: i, j, k, n
+   integer :: i, j, k, n, iteration = 0
    real(PR), dimension(:), allocatable :: x, y, xm, ym
-   real(PR), dimension(:,:), allocatable :: Rho, u, v
+   real(PR), dimension(:,:), allocatable :: Rho, u, v, kappa
+   real(PR), dimension(:,:), allocatable :: Rhop1, up1, vp1
    real(PR), dimension(:,:,:), allocatable :: Un, Unp1, Sn, phi
    real(PR) :: dt
    character(100) :: numero
@@ -30,6 +32,10 @@ program main
    allocate(Rho(1:imax+1,1:jmax+1))
    allocate(u(1:imax+1,1:jmax+1))
    allocate(v(1:imax+1,1:jmax+1))
+   allocate(Rhop1(1:imax+1,1:jmax+1))
+   allocate(up1(1:imax+1,1:jmax+1))
+   allocate(vp1(1:imax+1,1:jmax+1))
+   allocate(kappa(1:imax+1,1:jmax+1))
    allocate(Un(1:imax+1,1:jmax+1,1:3))
    allocate(Sn(1:imax+1,1:jmax+1,1:3))
    allocate(Unp1(1:imax+1,1:jmax+1,1:3))
@@ -43,23 +49,12 @@ program main
    Un = 0._PR; Unp1 = 0._PR; phi = 0._PR
 
    ! Conditions initiales
-   do j = 1, jmax + 1
-
-      do i = 1, imax + 1
-
-         Rho(i,j) = 1._PR
-         u(i,j) = 1._PR
-         v(i,j) = 1._PR
-         call non_conservative_to_conservative(Rho(i,j),u(i,j),v(i,j),Un(i,j,1:3))
-         
-      end do
-
-   end do
+   call init(Rho,u,v,xm,ym,Un,'one')
 
    ! Boucle en temps
    do n = 1, nmax
 
-      dt = 1._PR*10**(-5)
+      dt = 4.5_PR/10**5!(dx*dy) / (8._PR*(dx+dy) + dx*dy)
 
       do j = 2, jmax
 
@@ -67,8 +62,10 @@ program main
 
             call spatial_discretization(Un(i,j,1:3),Un(i-1,j,1:3),Un(i+1,j,1:3),Un(i,j+1,1:3),Un(i,j-1,1:3),phi(i,j,1:3))
             call source_term(Un(i,j,1:3),Sn(i,j,1:3))
-            Unp1(i,j,1:3) = Un(i,j,1:3) + dt * phi(i,j,1:3) + dt * Sn(i,j,1:3)
-            call conservative_to_non_conservative(Unp1(i,j,1:3),Rho(i,j),u(i,j),v(i,j))
+            kappa = compute_kappa(Rho)
+            Unp1(i,j,1:3) = Un(i,j,1:3) + dt * phi(i,j,1:3) + dt * kappa(i,j) * Sn(i,j,1:3)
+            call conservative_to_non_conservative(Unp1(i,j,1:3),Rhop1(i,j),up1(i,j),vp1(i,j))
+            call non_conservative_to_conservative(Rhop1(i,j),up1(i,j),vp1(i,j),Un(i,j,1:3))
             
          end do
          
@@ -94,9 +91,12 @@ program main
 
          end if
          
-         call sortie_vtk(numero,imax,jmax,x,y,Rho,u,v)
+         call sortie_vtk(numero,imax,jmax,x,y,Rhop1,up1,vp1)
 
       end if
+
+      iteration = iteration + 1
+      print*, iteration
 
    end do
   

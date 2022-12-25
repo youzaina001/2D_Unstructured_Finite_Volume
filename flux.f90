@@ -26,12 +26,21 @@ contains
 
     end subroutine non_conservative_to_conservative
 
+    function compute_kappa(Rho) result(kappa)
+
+        real(PR), intent(in) :: Rho(1:imax+1,1:jmax+1)
+        real(PR) :: kappa(1:imax+1,1:jmax+1)
+
+        kappa = 0.04_PR * matmul(matmul(Rho,Rho),Rho)
+        
+    end function compute_kappa
+
     function pressure(Rho) result(P)
 
         real(PR), intent(in) :: Rho
         real(PR) :: P
     
-        P = kappa * Rho
+        P = 75._PR * Rho
         
     end function pressure
 
@@ -39,7 +48,7 @@ contains
 
         real(PR) :: Pd
     
-        Pd = kappa
+        Pd = 75._PR
         
     end function pressure_prime
 
