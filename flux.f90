@@ -17,6 +17,15 @@ contains
 
     end subroutine conservative_to_non_conservative
 
+    subroutine non_conservative_to_conservative(Rho,u,v,UU)
+
+        real(PR), intent(in) :: Rho, u, v
+        real(PR), intent(out) :: UU(1:3)
+
+        UU = (/Rho,Rho*u,Rho*v/)
+
+    end subroutine non_conservative_to_conservative
+
     function pressure(Rho) result(P)
 
         real(PR), intent(in) :: Rho
