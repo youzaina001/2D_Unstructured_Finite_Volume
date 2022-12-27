@@ -12,8 +12,17 @@ contains
         real(PR), intent(out) :: Rho, u, v
 
         Rho = UU(1)
-        u = UU(2)/UU(1)
-        v = UU(3)/UU(1)
+        if (UU(1) /= 0) then
+
+            u = UU(2)/UU(1)
+            v = UU(3)/UU(1)
+
+        else
+
+            u = 0._PR
+            v = 0._PR
+            
+        end if
 
     end subroutine conservative_to_non_conservative
 
@@ -26,6 +35,17 @@ contains
 
     end subroutine non_conservative_to_conservative
 
+    subroutine swapping(Rhop1,up1,vp1,Rho,u,v)
+
+        real(PR), intent(in) :: Rhop1, up1, vp1
+        real(PR), intent(out) :: Rho, u, v
+
+        Rho = Rhop1
+        u = up1
+        v = vp1
+
+    end subroutine swapping
+
     function compute_kappa(Rho) result(kappa)
 
         real(PR), intent(in) :: Rho(1:imax+1,1:jmax+1)
@@ -35,20 +55,40 @@ contains
         
     end function compute_kappa
 
+    function compute_sigma(x,y,t,k) result(sigma)
+
+        integer, intent(in) :: k
+        real(PR), intent(in) :: x, y, t
+        real(PR) :: sigma
+
+        sigma = 1._PR + k * (-1._PR)**gamma * (gamma - 1) * exp(-(x+y))**(gamma - 1)/exp(-t) &
+              & -2._PR * exp(-t) / (k * exp(-(x+y)))
+        
+    end function compute_sigma
+
     function pressure(Rho) result(P)
 
         real(PR), intent(in) :: Rho
         real(PR) :: P
-    
-        P = 75._PR * Rho
+
+        if (case == 'one') then
+
+            P = Rho**gamma
+            
+        end if
         
     end function pressure
 
-    function pressure_prime() result(Pd)
+    function pressure_prime(Rho) result(Pd)
 
+        real(PR), intent(in) :: Rho
         real(PR) :: Pd
-    
-        Pd = 75._PR
+
+        if (case == 'one') then
+
+            Pd = (gamma - 1)*Rho**(gamma - 1)
+            
+        end if
         
     end function pressure_prime
 
@@ -97,13 +137,17 @@ contains
         real(PR), intent(in) :: normal(1:2)
         real(PR) :: FUk(1:3,1:2), FUl(1:3,1:2)
         real(PR) :: Fe(1:3)
+        real(PR) :: Rho1, u1, v1, Rho2, u2, v2
         real(PR) :: Pd
         real(PR) :: be
 
         FUk = Exact_flux(Uk)
         Ful = Exact_flux(Ul)
 
-        Pd = pressure_prime()
+        call conservative_to_non_conservative(Uk,Rho1,u1,v1)
+        call conservative_to_non_conservative(Ul,Rho2,u2,v2)
+
+        Pd = pressure_prime(max(Rho1,Rho2))
 
         be = max_celerity(Uk,Ul,Pd)
 

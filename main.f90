@@ -10,16 +10,23 @@ program main
    implicit none
 
    ! Déclaration des variables
-   integer :: i, j, k, n, iteration = 0
+   integer :: i, j, k, kms, n, iteration
    real(PR), dimension(:), allocatable :: x, y, xm, ym
-   real(PR), dimension(:,:), allocatable :: Rho, u, v, kappa
-   real(PR), dimension(:,:), allocatable :: Rhop1, up1, vp1
+   real(PR), dimension(:,:), allocatable :: Rho, u, v, kappa, p
+   real(PR), dimension(:,:), allocatable :: Rhop1, up1, vp1, sigma
    real(PR), dimension(:,:,:), allocatable :: Un, Unp1, Sn, phi
-   real(PR) :: dt
-   character(100) :: numero
+   real(PR) :: t0, t, dt
+   real(PR) :: PD, SPEED
+   character(100) :: numero, num
 
    ! Initialisation
    k = 0
+   kms = 640
+   iteration = 0
+   t0 = 0._PR
+   t = 0._PR
+   PD = 0._PR
+   SPEED = 0._PR
 
 
    ! Allocation des vecteurs 1D pour le maillage
@@ -32,6 +39,8 @@ program main
    allocate(Rho(1:imax+1,1:jmax+1))
    allocate(u(1:imax+1,1:jmax+1))
    allocate(v(1:imax+1,1:jmax+1))
+   allocate(p(1:imax+1,1:jmax+1))
+   allocate(sigma(1:imax+1,1:jmax+1))
    allocate(Rhop1(1:imax+1,1:jmax+1))
    allocate(up1(1:imax+1,1:jmax+1))
    allocate(vp1(1:imax+1,1:jmax+1))
@@ -45,16 +54,32 @@ program main
    call load_mesh(x,y,xm,ym)
 
    ! Initialisation
-   Rho = 0._PR; u = 0._PR; v = 0._PR
+   Rho = 0._PR; u = 0._PR; v = 0._PR; p = 0._PR
+   Rhop1 = 0._PR; up1 = 0._PR; vp1 = 0._PR; sigma = 0._PR
    Un = 0._PR; Unp1 = 0._PR; phi = 0._PR
 
    ! Conditions initiales
-   call init(Rho,u,v,xm,ym,Un,'one')
+   call init(Rho,u,v,p,sigma,x,y,kms,t0,Un)
+
+   !num = 1000
+   write(num,*) 123456789
+   call sortie_vtk(num,imax,jmax,x,y,Rho,u,v)
 
    ! Boucle en temps
    do n = 1, nmax
 
-      dt = 4.5_PR/10**5!(dx*dy) / (8._PR*(dx+dy) + dx*dy)
+      ! Computing time step
+      PD = pressure_prime(maxval(Rho))
+      !SPEED = max_celerity(maxval(u),maxval(v),Pd)
+      !dt = 1._PR/10**9 CFL * (dx*dy) / (8._PR*SPEED*(dx+dy) + maxval(sigma)*dx*dy)
+      !CFL <= min(dx, dy) / max(|u| + c, |v| + c)
+      dt = dx*dy/(8._pr * maxval((abs(u) + PD)/dx + (abs(v) + PD)/dy) * (dx + dy) &
+         & + maxval(sigma)*dx*dy)
+
+      print*, "The time step is equal to:", dt, "."
+
+      ! Boundary conditions
+      call Neumann(Rho,u,v)
 
       do j = 2, jmax
 
@@ -62,10 +87,21 @@ program main
 
             call spatial_discretization(Un(i,j,1:3),Un(i-1,j,1:3),Un(i+1,j,1:3),Un(i,j+1,1:3),Un(i,j-1,1:3),phi(i,j,1:3))
             call source_term(Un(i,j,1:3),Sn(i,j,1:3))
-            kappa = compute_kappa(Rho)
-            Unp1(i,j,1:3) = Un(i,j,1:3) + dt * phi(i,j,1:3) + dt * kappa(i,j) * Sn(i,j,1:3)
+            sigma(i,j) = compute_sigma(x(i),y(j),t,kms)
+            Unp1(i,j,1:3) = Un(i,j,1:3) + dt * phi(i,j,1:3) - dt * sigma(i,j) * Sn(i,j,1:3)
+            
+         end do
+         
+      end do
+
+      do j = 2, jmax
+
+         do i = 2, imax
+
+            ! Swapping solutions
             call conservative_to_non_conservative(Unp1(i,j,1:3),Rhop1(i,j),up1(i,j),vp1(i,j))
-            call non_conservative_to_conservative(Rhop1(i,j),up1(i,j),vp1(i,j),Un(i,j,1:3))
+            call swapping(Rhop1(i,j),up1(i,j),vp1(i,j),Rho(i,j),u(i,j),v(i,j))
+            call non_conservative_to_conservative(Rho(i,j),u(i,j),v(i,j),Un(i,j,1:3))
             
          end do
          
@@ -91,12 +127,14 @@ program main
 
          end if
          
-         call sortie_vtk(numero,imax,jmax,x,y,Rhop1,up1,vp1)
+         call sortie_vtk(numero,imax,jmax,x,y,Rho,u,v)
 
       end if
 
       iteration = iteration + 1
-      print*, iteration
+      t = t + dt
+      print*, "On est à la ", iteration, "itération."
+      print*, "Le temps est égal à :", t, "."
 
    end do
   
