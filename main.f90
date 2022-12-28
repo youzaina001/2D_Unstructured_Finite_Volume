@@ -5,6 +5,7 @@ program main
    use flux
    use solver
    use initial_condition
+   use boundary_conditions
    use vtk
 
    implicit none
@@ -59,7 +60,7 @@ program main
    Un = 0._PR; Unp1 = 0._PR; phi = 0._PR
 
    ! Conditions initiales
-   call init(Rho,u,v,p,sigma,x,y,kms,t0,Un)
+   call init(Rho,u,v,p,sigma,xm,ym,kms,t0,Un)
 
    !num = 1000
    write(num,*) 123456789
@@ -69,10 +70,8 @@ program main
    do n = 1, nmax
 
       ! Computing time step
+      !CFL <= min(dx, dy) / max(|u| + c, |v| + c) où c = sqrt(p_prime)
       PD = pressure_prime(maxval(Rho))
-      !SPEED = max_celerity(maxval(u),maxval(v),Pd)
-      !dt = 1._PR/10**9 CFL * (dx*dy) / (8._PR*SPEED*(dx+dy) + maxval(sigma)*dx*dy)
-      !CFL <= min(dx, dy) / max(|u| + c, |v| + c)
       dt = dx*dy/(8._pr * maxval((abs(u) + PD)/dx + (abs(v) + PD)/dy) * (dx + dy) &
          & + maxval(sigma)*dx*dy)
 
@@ -87,7 +86,7 @@ program main
 
             call spatial_discretization(Un(i,j,1:3),Un(i-1,j,1:3),Un(i+1,j,1:3),Un(i,j+1,1:3),Un(i,j-1,1:3),phi(i,j,1:3))
             call source_term(Un(i,j,1:3),Sn(i,j,1:3))
-            sigma(i,j) = compute_sigma(x(i),y(j),t,kms)
+            sigma(i,j) = compute_sigma(xm(i),ym(j),t,kms)
             Unp1(i,j,1:3) = Un(i,j,1:3) + dt * phi(i,j,1:3) - dt * sigma(i,j) * Sn(i,j,1:3)
             
          end do
