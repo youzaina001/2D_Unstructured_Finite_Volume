@@ -82,6 +82,7 @@ program main
       call Neumann(Rho,u,v)
 
       ! Solution using an explicit Euler solver
+      !call RK3(Un,t,dt,kms,xm,ym,Unp1)
       call explicit_euler(Un,t,dt,kms,xm,ym,Unp1)
 
       do j = 2, jmax

@@ -34,6 +34,10 @@ contains
                 end do
           
             end do
+
+        else if (case == 'two') then
+
+            print*, "There is no exact solution for this test case"
             
         end if
 
@@ -49,7 +53,29 @@ contains
         real(PR), intent(out) ::  UU(1:imax+1,1:jmax+1,1:3)
         integer :: i, j
 
-        call exact_solution(Rho,u,v,p,sigma,x,y,k,t,UU)
+        if (case == 'one') then
+
+            call exact_solution(Rho,u,v,p,sigma,x,y,k,t,UU)
+
+        else if (case == 'two') then
+
+            do j = 1, jmax + 1
+
+                do i = 1, imax + 1
+
+                    Rho(i,j) = exp(-(x(i)-50._PR)**2-(y(i)-50._PR)**2) + 1._PR
+                    u(i,j) = 0._PR
+                    v(i,j) = 0._PR
+                    p(i,j) = pressure(Rho(i,j))
+                    sigma(i,j) = compute_sigma(x(i),y(j),t,k)
+                    
+                    call non_conservative_to_conservative(Rho(i,j),u(i,j),v(i,j),UU(i,j,1:3))
+                   
+                end do
+          
+            end do
+            
+        end if
  
     end subroutine init
 

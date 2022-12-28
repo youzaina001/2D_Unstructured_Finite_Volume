@@ -46,14 +46,14 @@ contains
 
     end subroutine swapping
 
-    function compute_kappa(Rho) result(kappa)
+    !function compute_kappa(Rho) result(kappa)
 
-        real(PR), intent(in) :: Rho(1:imax+1,1:jmax+1)
-        real(PR) :: kappa(1:imax+1,1:jmax+1)
+    !    real(PR), intent(in) :: Rho(1:imax+1,1:jmax+1)
+    !    real(PR) :: kappa(1:imax+1,1:jmax+1)
 
-        kappa = 0.04_PR * matmul(matmul(Rho,Rho),Rho)
+    !    kappa = 0.04_PR * matmul(matmul(Rho,Rho),Rho)
         
-    end function compute_kappa
+    !end function compute_kappa
 
     function compute_sigma(x,y,t,k) result(sigma)
 
@@ -61,8 +61,16 @@ contains
         real(PR), intent(in) :: x, y, t
         real(PR) :: sigma
 
-        sigma = 1._PR + k * (-1._PR)**gamma * (gamma - 1) * exp(-(x+y))**(gamma - 1)/exp(-t) &
+        if (case == 'one') then
+
+            sigma = 1._PR + k * (-1._PR)**gamma * (gamma - 1) * exp(-(x+y))**(gamma - 1)/exp(-t) &
               & -2._PR * exp(-t) / (k * exp(-(x+y)))
+
+        else if (case == 'two') then
+
+            sigma = 100._PR
+            
+        end if
         
     end function compute_sigma
 
@@ -71,7 +79,7 @@ contains
         real(PR), intent(in) :: Rho
         real(PR) :: P
 
-        if (case == 'one') then
+        if (case == 'one' .or. case == 'two') then
 
             P = Rho**gamma
             
@@ -84,7 +92,7 @@ contains
         real(PR), intent(in) :: Rho
         real(PR) :: Pd
 
-        if (case == 'one') then
+        if (case == 'one' .or. case == 'two') then
 
             Pd = (gamma - 1)*Rho**(gamma - 1)
             
