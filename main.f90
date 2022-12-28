@@ -6,6 +6,7 @@ program main
    use solver
    use initial_condition
    use boundary_conditions
+   use time_scheme
    use vtk
 
    implicit none
@@ -80,18 +81,8 @@ program main
       ! Boundary conditions
       call Neumann(Rho,u,v)
 
-      do j = 2, jmax
-
-         do i = 2, imax
-
-            call spatial_discretization(Un(i,j,1:3),Un(i-1,j,1:3),Un(i+1,j,1:3),Un(i,j+1,1:3),Un(i,j-1,1:3),phi(i,j,1:3))
-            call source_term(Un(i,j,1:3),Sn(i,j,1:3))
-            sigma(i,j) = compute_sigma(xm(i),ym(j),t,kms)
-            Unp1(i,j,1:3) = Un(i,j,1:3) + dt * phi(i,j,1:3) - dt * sigma(i,j) * Sn(i,j,1:3)
-            
-         end do
-         
-      end do
+      ! Solution using an explicit Euler solver
+      call explicit_euler(Un,t,dt,kms,xm,ym,Unp1)
 
       do j = 2, jmax
 
