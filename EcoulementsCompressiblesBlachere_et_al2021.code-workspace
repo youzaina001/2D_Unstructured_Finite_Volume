@@ -1,0 +1,26 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../schema_hll_hllc/Euler2D"
+		},
+		{
+			"path": "../../shallow_water"
+		},
+		{
+			"path": "../../AdmAP2D/src"
+		},
+		{
+			"path": "../../achylles1D"
+		},
+		{
+			"path": "../../euler_2d_kfvs"
+		},
+		{
+			"path": "../schema_hll_hllc/Euler1D"
+		}
+	],
+	"settings": {}
+}

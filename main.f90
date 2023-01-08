@@ -4,6 +4,7 @@ program main
    use cartesian_mesh
    use flux
    use solver
+   use high_order
    use initial_condition
    use boundary_conditions
    use time_scheme
@@ -73,7 +74,7 @@ program main
       ! Computing time step
       !CFL <= min(dx, dy) / max(|u| + c, |v| + c) où c = sqrt(p_prime)
       PD = pressure_prime(maxval(Rho))
-      dt = dx*dy/(8._pr * maxval((abs(u) + PD)/dx + (abs(v) + PD)/dy) * (dx + dy) &
+      dt = dx*dy/(8._pr * maxval((abs(u) + sqrt(PD))/dx + (abs(v) + sqrt(PD))/dy) * (dx + dy) &
          & + maxval(sigma)*dx*dy)
 
       print*, "The time step is equal to:", dt, "."
@@ -99,7 +100,7 @@ program main
       end do
 
       if (mod(n,pas_affichage) == 0) then ! On stocke la solution par fréquence de 
-                                          ! 10 pas de temps  
+                                          ! 100 pas de temps  
          k=k+1
 
          write(numero,*) k
