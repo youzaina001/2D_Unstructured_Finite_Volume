@@ -8,6 +8,7 @@ program main
    use initial_condition
    use boundary_conditions
    use time_scheme
+   use computing_error
    use vtk
 
    implicit none
@@ -17,10 +18,16 @@ program main
    real(PR), dimension(:), allocatable :: x, y, xm, ym
    real(PR), dimension(:,:), allocatable :: Rho, u, v, kappa, p
    real(PR), dimension(:,:), allocatable :: Rhop1, up1, vp1, sigma
-   real(PR), dimension(:,:,:), allocatable :: Un, Unp1, Sn, phi
+   real(PR), dimension(:,:), allocatable :: Rho_ex
+   real(PR), dimension(:,:,:), allocatable :: Un, Unp1, Uex, Sn, phi
    real(PR) :: t0, t, dt
    real(PR) :: PD, SPEED
+   real(PR) :: l1error, l2error
    character(100) :: numero, num
+
+   ! Creating the file in which we are gonna store the L1 and L2 errors for different meshes
+   open(25, file='Convergence_errors.dat', access = 'append')
+
 
    ! Initialisation
    k = 0
@@ -30,6 +37,9 @@ program main
    t = 0._PR
    PD = 0._PR
    SPEED = 0._PR
+   l1error = 0._PR
+   l2error = 0._PR
+
 
 
    ! Allocation des vecteurs 1D pour le maillage
@@ -64,12 +74,15 @@ program main
    ! Conditions initiales
    call init(Rho,u,v,p,sigma,xm,ym,kms,t0,Un)
 
+   ! Densité exacte
+   Rho_ex = Rho
+
    !num = 1000
    write(num,*) 123456789
    call sortie_vtk(num,imax,jmax,x,y,Rho,u,v)
 
    ! Boucle en temps
-   do n = 1, nmax
+   do while (t <= tf)
 
       ! Computing time step
       !CFL <= min(dx, dy) / max(|u| + c, |v| + c) où c = sqrt(p_prime)
@@ -79,10 +92,13 @@ program main
 
       print*, "The time step is equal to:", dt, "."
 
+      ! Paramètre thete_e permettant la limitation
+      theta_e(1:3) = (/1._PR/(1._PR + maxval(sigma)*t), 1._PR, 1._PR/)
+
       ! Boundary conditions
       call Neumann(Rho,u,v)
 
-      ! Solution using an explicit Euler solver
+      ! Solution using an explicit Euler solver or RK3 scheme
       !call RK3(Un,t,dt,kms,xm,ym,Unp1)
       call explicit_euler(Un,t,dt,kms,xm,ym,Unp1)
 
@@ -99,7 +115,7 @@ program main
          
       end do
 
-      if (mod(n,pas_affichage) == 0) then ! On stocke la solution par fréquence de 
+      if (mod(iteration,pas_affichage) == 0) then ! On stocke la solution par fréquence de 
                                           ! 100 pas de temps  
          k=k+1
 
@@ -129,5 +145,10 @@ program main
       print*, "Le temps est égal à :", t, "."
 
    end do
+
+   ! Calcul des erreurs L1 et L2
+   l1error = L1_Error(Rho_ex,Rho)
+   l2error = L2_Error(Rho_ex,Rho)
+   write(25,*) l1error, l2error
   
 end program main
