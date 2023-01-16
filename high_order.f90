@@ -1,39 +1,11 @@
 module high_order
 
   use parameters
-
+  !use lapack
 
   implicit none
   
 contains
-
-    !subroutine quadrature_tri(dmax,R,bar_coor,multiplicity,weights)
-
-    !  integer, intent(in) :: dmax
-    !  integer, intent(out) ::  R, multiplicity
-    !  real(PR), intent(out) :: bar_coor(1:3), weights(1:2)
-    !  real(PR) :: a1 = 0.091576213509771_PR
-    !  real(PR) :: a2 = 0.445948490915965_PR
-    !  real(PR) :: b1 = 0.109951743655322_PR
-    !  real(PR) :: b2 = 0.223381589678011_PR
-
-    !  if (dmax == 1) then
-
-    !    R = 1
-    !    bar_coor = (/1._PR/3._PR, 1._PR/3._PR, 1._PR/3._PR/)
-    !    multiplicity = 1
-    !    weights = (/1._PR/)
-
-    !  else if (dmax == 2) then
-
-    !    R = 3
-    !    bar_coor = (/1._PR/2._PR, 1._PR/2._PR, 0._PR/)
-    !    multiplicity = 3
-    !    weights = (/1._PR/3._PR/)
-        
-    !  end if
-      
-    !end subroutine quadrature_tri
 
     subroutine inverse(A, Am1)
 
@@ -127,6 +99,7 @@ contains
       integer, intent(in) :: dmax, indx, indy
       real(PR), intent(out) ::  xm(1:imax+1), ym(1:jmax+1), value(1:imax+1,1:jmax+1)
       real(PR), dimension(:,:), allocatable, intent(out) :: coeffs
+      integer :: info, ipiv(2)
       real(PR), dimension(:,:), allocatable :: RHS
       real(PR), dimension(:,:), allocatable :: P_IJ, MTM, MTB, MTM_inv
 
@@ -173,6 +146,22 @@ contains
 
         ! On calcule l'inverse de M^t*M
         call inverse(MTM, MTM_inv)
+        !call dgetrf(2,2,MTM,2,ipiv,info)
+
+        ! Check for errors
+        !if (info /= 0) then
+        !  write(*,*) "Error in LU factorization"
+        !stop
+        !endif
+
+        ! Compute inverse of A
+        !call dgetri(2,MTM,2,ipiv,MTM_inv,2,info)
+
+        ! Check for errors
+        !if (info /= 0) then
+        !  write(*,*) "Error in inverse computation"
+        !stop
+        !endif
 
         ! Finalement, on peut obtenir les poids
         coeffs = matmul(MTM_inv,MTB)
@@ -180,5 +169,28 @@ contains
       end if
       
     end subroutine polyomial_reconstruction_cell_IJ
+
+    !--------------------------------------------------------------------!
+    !> @brief
+    !> Check if the value of the solution on a cell is physically admissible.
+    !>
+    !> @param[in] U_K conservative variables
+    !>
+    !> @author Florian Blachère
+    !--------------------------------------------------------------------!
+    !>function IsPhysicallyAdmissible(U_K)
+    !>  real(PR), dimension(:), intent(in) :: U_K
+
+    !>  logical :: IsPhysicallyAdmissible
+
+    !>  if (U_K(1) < 0._PR) then
+    !>    IsPhysicallyAdmissible = .FALSE.
+    !>  else if (compute_pressure(U_K) < 0._PR) then
+    !>    IsPhysicallyAdmissible = .FALSE.
+    !>  else
+    !>    IsPhysicallyAdmissible = .TRUE.
+    !>  end if
+
+    !>end function IsPhysicallyAdmissible
   
 end module high_order

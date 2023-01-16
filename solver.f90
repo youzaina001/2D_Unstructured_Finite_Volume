@@ -11,8 +11,8 @@ contains
 
         real(PR), intent(in) :: Uk(1:3), Ul(1:3), Ur(1:3), Ut(1:3), Ub(1:3)
         real(PR), intent(out) :: phi(1:3)
-        real(PR) :: n_i_to_ip1(2), n_i_to_im1(2)
-        real(PR) :: n_j_to_jp1(2), n_j_to_jm1(2)
+        real(PR) :: n_i_to_ip1(1:2), n_i_to_im1(1:2)
+        real(PR) :: n_j_to_jp1(1:2), n_j_to_jm1(1:2)
         integer :: i, j
 
         n_i_to_im1 = (/-1,0/)

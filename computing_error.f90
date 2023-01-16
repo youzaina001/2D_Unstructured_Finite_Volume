@@ -9,8 +9,7 @@ contains
 
     function L1_Error(Rho_ex,Rho_num) result(l1error)
 
-        !real(PR), intent(in) :: Uex(1:imax+1,1:jmax+1,1:3), Unum(1:imax+1,1:jmax+1,1:3)
-        real(PR), intent(in) :: Rho_ex(1:imax+1,1:jmax+1), Rho_num(1:imax+1,1:jmax+1)
+        real(PR), intent(in) :: Rho_ex(0:imax+1,0:jmax+1), Rho_num(0:imax+1,0:jmax+1)
         real(PR) :: l1error
         real(PR) :: SumL1
         integer :: i, j
@@ -19,9 +18,9 @@ contains
         SumL1 = 0
 
         ! Computing L1 error on density
-        do j = 1, jmax + 1
+        do j = 0, jmax + 1
 
-            do i = 1, imax + 1
+            do i = 0, imax + 1
 
                 SumL1 = SumL1 + abs(Rho_ex(i,j) - Rho_num(i,j))
                 
@@ -35,7 +34,7 @@ contains
 
     function L2_Error(Rho_ex,Rho_num) result(l2error)
 
-        real(PR), intent(in) :: Rho_ex(1:imax+1,1:jmax+1), Rho_num(1:imax+1,1:jmax+1)
+        real(PR), intent(in) :: Rho_ex(0:imax+1,0:jmax+1), Rho_num(0:imax+1,0:jmax+1)
         real(PR) :: l2error
         real(PR) :: SumL2
         integer :: i, j
@@ -44,9 +43,9 @@ contains
         SumL2 = 0
 
         ! Computing L1 error on density
-        do j = 1, jmax + 1
+        do j = 0, jmax + 1
 
-            do i = 1, imax + 1
+            do i = 0, imax + 1
 
                 SumL2 = SumL2 + (Rho_ex(i,j) - Rho_num(i,j))**2
                 

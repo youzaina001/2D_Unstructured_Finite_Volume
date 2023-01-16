@@ -12,7 +12,7 @@ contains
         real(PR), intent(out) :: Rho, u, v
 
         Rho = UU(1)
-        if (UU(1) /= 0) then
+        if (UU(1) > 0) then
 
             u = UU(2)/UU(1)
             v = UU(3)/UU(1)
@@ -46,29 +46,23 @@ contains
 
     end subroutine swapping
 
-    !function compute_kappa(Rho) result(kappa)
-
-    !    real(PR), intent(in) :: Rho(1:imax+1,1:jmax+1)
-    !    real(PR) :: kappa(1:imax+1,1:jmax+1)
-
-    !    kappa = 0.04_PR * matmul(matmul(Rho,Rho),Rho)
-        
-    !end function compute_kappa
-
-    function compute_sigma(x,y,t,k) result(sigma)
+    function compute_sigma(Rho,x,y,t,k) result(sigma)
 
         integer, intent(in) :: k
-        real(PR), intent(in) :: x, y, t
+        real(PR), intent(in) :: Rho, x, y, t
         real(PR) :: sigma
 
         if (case == 'one') then
 
-            sigma = 1._PR + k * (-1._PR)**gamma * (gamma - 1) * exp(-(x+y))**(gamma - 1)/exp(-t) &
-              & -2._PR * exp(-t) / (k * exp(-(x+y)))
+            sigma = 1._PR + k * gamma * exp(t) * Rho**gamma - (2._PR/k) * exp(-t) * exp(x+y)
 
         else if (case == 'two') then
 
             sigma = 100._PR
+
+        else if (case == 'thr') then
+
+            sigma = 5._PR*(Rho/5._PR)**3
             
         end if
         
@@ -79,24 +73,16 @@ contains
         real(PR), intent(in) :: Rho
         real(PR) :: P
 
-        if (case == 'one' .or. case == 'two') then
-
-            P = Rho**gamma
-            
-        end if
+        P = Rho**gamma
         
     end function pressure
 
-    function pressure_prime(Rho) result(Pd)
+    function pressure_prime(Rho) result(PP)
 
         real(PR), intent(in) :: Rho
-        real(PR) :: Pd
+        real(PR) :: PP
 
-        if (case == 'one' .or. case == 'two') then
-
-            Pd = (gamma - 1)*Rho**(gamma - 1)
-            
-        end if
+        PP = (gamma - 1)*Rho**(gamma - 1)
         
     end function pressure_prime
 
@@ -119,10 +105,10 @@ contains
         
     end function Exact_flux
 
-    function max_celerity(Uk,Ul,Pd) result(c)
+    function max_celerity(Uk,Ul,PPk,PPl) result(c)
 
         real(PR), intent(in) :: Uk(1:3), Ul(1:3)
-        real(PR), intent(in) :: Pd
+        real(PR), intent(in) :: PPk, PPl
         real(PR) :: Rhok, Rhol, uxk, uxl, vyk, vyl
         real(PR) :: cuk, cul, cvk, cvl
         real(PR) :: c
@@ -130,36 +116,43 @@ contains
         call conservative_to_non_conservative(Uk,Rhok,uxk,vyk)
         call conservative_to_non_conservative(Ul,Rhol,uxl,vyl)
 
-        cuk = uxk + sqrt(Pd)
-        cul = uxl + sqrt(Pd)
-        cvk = vyk + sqrt(Pd)
-        cvl = vyl + sqrt(Pd)
+        cuk = uxk + sqrt(PPk)
+        cul = uxl + sqrt(PPl)
+        cvk = vyk + sqrt(PPk)
+        cvl = vyl + sqrt(PPl)
 
         c = max(cuk,cul,cvk,cvl)
         
     end function max_celerity
 
-    function Rusanov(Uk,Ul,normal) result(Fe)
+    function Rusanov(Uk,Ul,nKe) result(Fe) ! nKe : normale
 
         real(PR), intent(in) :: Uk(1:3), Ul(1:3)
-        real(PR), intent(in) :: normal(1:2)
+        real(PR), intent(in) :: nKe(1:2)
         real(PR) :: FUk(1:3,1:2), FUl(1:3,1:2)
         real(PR) :: Fe(1:3)
         real(PR) :: Rho1, u1, v1, Rho2, u2, v2
-        real(PR) :: Pd
+        real(PR) :: PPk, PPl
         real(PR) :: be
 
         FUk = Exact_flux(Uk)
         Ful = Exact_flux(Ul)
+        PPk = pressure_prime(Uk(1))
+        PPl = pressure_prime(Ul(1))
 
         call conservative_to_non_conservative(Uk,Rho1,u1,v1)
         call conservative_to_non_conservative(Ul,Rho2,u2,v2)
 
-        Pd = pressure_prime(max(Rho1,Rho2))
+        be = max_celerity(Uk,Ul,PPk,PPl)
 
-        be = max_celerity(Uk,Ul,Pd)
+        Fe(1) = 0.5_PR * (FUk(1,1)*nKe(1) + FUk(1,2)*nKe(2) + FUl(1,1)*nKe(1) + FUl(1,2)*nKe(2)) &
+              & - 0.5_PR * be * theta_e * (Ul(1) - Uk(1))
 
-        Fe = 0.5_PR * (matmul(FUk,normal) + matmul(FUl,normal)) - 0.5_PR * be * theta_e * (Ul - Uk)
+        Fe(2) = 0.5_PR * (FUk(2,1)*nKe(1) + FUk(2,2)*nKe(2) + FUl(2,1)*nKe(1) + FUl(2,2)*nKe(2)) &
+              & - 0.5_PR * be * (Ul(2) - Uk(2))
+
+        Fe(3) = 0.5_PR * (FUk(3,1)*nKe(1) + FUk(3,2)*nKe(2) + FUl(3,1)*nKe(1) + FUl(3,2)*nKe(2)) &
+              & - 0.5_PR * be * (Ul(3) - Uk(3))
 
     end function Rusanov
 

@@ -16,7 +16,7 @@ program main
    ! Déclaration des variables
    integer :: i, j, k, kms, n, iteration
    real(PR), dimension(:), allocatable :: x, y, xm, ym
-   real(PR), dimension(:,:), allocatable :: Rho, u, v, kappa, p
+   real(PR), dimension(:,:), allocatable :: Rho, u, v, p
    real(PR), dimension(:,:), allocatable :: Rhop1, up1, vp1, sigma
    real(PR), dimension(:,:), allocatable :: Rho_ex
    real(PR), dimension(:,:,:), allocatable :: Un, Unp1, Uex, Sn, phi
@@ -26,7 +26,7 @@ program main
    character(100) :: numero, num
 
    ! Creating the file in which we are gonna store the L1 and L2 errors for different meshes
-   open(25, file='Convergence_errors.dat', access = 'append')
+   open(25, file='Output/Convergence_errors.dat', access = 'append')
 
 
    ! Initialisation
@@ -43,25 +43,26 @@ program main
 
 
    ! Allocation des vecteurs 1D pour le maillage
-   allocate(x(1:imax+1))
-   allocate(y(1:jmax+1))
-   allocate(xm(1:imax+1))
-   allocate(ym(1:jmax+1))
+   allocate(x(0:imax))
+   allocate(y(0:jmax))
+   allocate(xm(1:imax))
+   allocate(ym(1:jmax))
 
    ! Allocation des vecteurs pour la solution
-   allocate(Rho(1:imax+1,1:jmax+1))
-   allocate(u(1:imax+1,1:jmax+1))
-   allocate(v(1:imax+1,1:jmax+1))
-   allocate(p(1:imax+1,1:jmax+1))
-   allocate(sigma(1:imax+1,1:jmax+1))
-   allocate(Rhop1(1:imax+1,1:jmax+1))
-   allocate(up1(1:imax+1,1:jmax+1))
-   allocate(vp1(1:imax+1,1:jmax+1))
-   allocate(kappa(1:imax+1,1:jmax+1))
-   allocate(Un(1:imax+1,1:jmax+1,1:3))
-   allocate(Sn(1:imax+1,1:jmax+1,1:3))
-   allocate(Unp1(1:imax+1,1:jmax+1,1:3))
-   allocate(phi(1:imax+1,1:jmax+1,1:3))
+   allocate(Rho(0:imax+1,0:jmax+1))
+   allocate(Rho_ex(0:imax+1,0:jmax+1))
+   allocate(u(0:imax+1,0:jmax+1))
+   allocate(v(0:imax+1,0:jmax+1))
+   allocate(p(0:imax+1,0:jmax+1))
+   allocate(sigma(0:imax+1,0:jmax+1))
+   allocate(Rhop1(0:imax+1,0:jmax+1))
+   allocate(up1(0:imax+1,0:jmax+1))
+   allocate(vp1(0:imax+1,0:jmax+1))
+   allocate(Un(0:imax+1,0:jmax+1,1:3))
+   allocate(Uex(0:imax+1,0:jmax+1,1:3))
+   allocate(Sn(0:imax+1,0:jmax+1,1:3))
+   allocate(Unp1(0:imax+1,0:jmax+1,1:3))
+   allocate(phi(0:imax+1,0:jmax+1,1:3))
 
    ! Chargement du maillage 2D cartésien
    call load_mesh(x,y,xm,ym)
@@ -74,7 +75,7 @@ program main
    ! Conditions initiales
    call init(Rho,u,v,p,sigma,xm,ym,kms,t0,Un)
 
-   ! Densité exacte
+   ! Densité exacte qui permettra de calculer les erreurs de convergence
    Rho_ex = Rho
 
    !num = 1000
@@ -85,26 +86,29 @@ program main
    do while (t <= tf)
 
       ! Computing time step
-      !CFL <= min(dx, dy) / max(|u| + c, |v| + c) où c = sqrt(p_prime)
-      PD = pressure_prime(maxval(Rho))
-      dt = dx*dy/(8._pr * maxval((abs(u) + sqrt(PD))/dx + (abs(v) + sqrt(PD))/dy) * (dx + dy) &
-         & + maxval(sigma)*dx*dy)
+      call time_step(Rho,u,v,xm,ym,t,kms,dt)
 
       print*, "The time step is equal to:", dt, "."
 
+      ! Obtention de gamma
+      gamma = maxval(sigma)
+      print*, "Sigma is equal to:", gamma, "."
+
       ! Paramètre thete_e permettant la limitation
-      theta_e(1:3) = (/1._PR/(1._PR + maxval(sigma)*t), 1._PR, 1._PR/)
+      !theta_e(1:3) = (/1._PR, 1._PR, 1._PR/)
+      theta_e = 1._PR/(1._PR + maxval(sigma)*t)
 
       ! Boundary conditions
+      !call Dirichlet(Rho,u,v,x,y,t,kms)
       call Neumann(Rho,u,v)
 
       ! Solution using an explicit Euler solver or RK3 scheme
       !call RK3(Un,t,dt,kms,xm,ym,Unp1)
       call explicit_euler(Un,t,dt,kms,xm,ym,Unp1)
 
-      do j = 2, jmax
+      do j = 1, jmax
 
-         do i = 2, imax
+         do i = 1, imax
 
             ! Swapping solutions
             call conservative_to_non_conservative(Unp1(i,j,1:3),Rhop1(i,j),up1(i,j),vp1(i,j))
@@ -115,8 +119,8 @@ program main
          
       end do
 
-      if (mod(iteration,pas_affichage) == 0) then ! On stocke la solution par fréquence de 
-                                          ! 100 pas de temps  
+      if (mod(iteration,pas_affichage) == 0) then  
+
          k=k+1
 
          write(numero,*) k
@@ -150,5 +154,10 @@ program main
    l1error = L1_Error(Rho_ex,Rho)
    l2error = L2_Error(Rho_ex,Rho)
    write(25,*) l1error, l2error
+
+   !deallocate(x,y,xm,ym)
+   !deallocate(Rho,u,v,p)
+   !deallocate(sigma,Rhop1,up1,vp1)
+   !deallocate(Un,Sn,Unp1,phi)
   
 end program main
