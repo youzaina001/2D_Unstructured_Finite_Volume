@@ -89,5 +89,40 @@ contains
         end if
         
     end subroutine Dirichlet
+
+    subroutine Wall(Rho,u,v)
+
+        real(PR), intent(inout) :: Rho(0:imax+1,0:jmax+1), u(0:imax+1,0:jmax+1), v(0:imax+1,0:jmax+1)
+        integer :: i, j
+
+        do j = 1, jmax
+
+            ! left
+            Rho(0,j) = Rho(1,j)
+            u(0,j) = 0._PR
+            v(0,j) = 0._PR
+   
+            ! right
+            Rho(imax+1,j) = Rho(imax,j)
+            u(imax+1,j) = 0._PR
+            v(imax+1,j) = 0._PR
+   
+        end do
+   
+        do i = 1, imax
+   
+            ! bottom
+            Rho(i,0) = Rho(i,1)
+            u(i,0) = 0._PR
+            v(i,0) = 0._PR
+   
+            ! top
+            Rho(i,jmax+1) = Rho(i,jmax)
+            u(i,jmax+1) = 0._PR
+            v(i,jmax+1) = 0._PR
+   
+        end do
+        
+    end subroutine Wall
     
 end module boundary_conditions

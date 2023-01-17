@@ -12,7 +12,7 @@ contains
         real(PR), intent(out) :: Rho, u, v
 
         Rho = UU(1)
-        if (UU(1) > 0) then
+        if (UU(1) > 0._PR) then
 
             u = UU(2)/UU(1)
             v = UU(3)/UU(1)
@@ -49,12 +49,13 @@ contains
     function compute_sigma(Rho,x,y,t,k) result(sigma)
 
         integer, intent(in) :: k
-        real(PR), intent(in) :: Rho, x, y, t
+        real(PR), intent(in) :: Rho
+        real(PR), intent(in) :: x, y, t
         real(PR) :: sigma
 
         if (case == 'one') then
 
-            sigma = 1._PR + k * gamma * exp(t) * Rho**gamma - (2._PR/k) * exp(-t) * exp(x+y)
+            sigma = -k*exp(t)*((-exp(-t)/k) - gamma*exp(-gamma*(x+y)) - (2*exp(-2*t)/(k**2*exp(-(x+y)))))
 
         else if (case == 'two') then
 
@@ -62,7 +63,7 @@ contains
 
         else if (case == 'thr') then
 
-            sigma = 5._PR*(Rho/5._PR)**3
+            sigma = (Rho**3)/25._PR
             
         end if
         

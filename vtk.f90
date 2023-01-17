@@ -10,9 +10,9 @@ contains
 
       character(100) :: numero  
       integer, intent(in) :: imax, jmax
-      real(PR), dimension(1:imax+1), intent(in) :: x
-      real(PR), dimension(1:jmax+1), intent(in) :: y
-      real(PR), dimension(:,:), intent(in) :: Rho, u, v
+      real(PR), dimension(0:imax), intent(in) :: x
+      real(PR), dimension(0:jmax), intent(in) :: y
+      real(PR), dimension(1:imax,1:jmax), intent(in) :: Rho, u, v
 
       integer :: i, j
 
@@ -26,12 +26,12 @@ contains
       
     
       write(9,*) 'X_COORDINATES',imax+1,' double'
-      do i=1,imax+1
+      do i=0,imax
          write(9,*) x(i)
       end do
 
       write(9,*) 'Y_COORDINATES',jmax+1,' double'
-      do j=1,jmax+1
+      do j=0,jmax
          write(9,*) y(j)
       end do
 
@@ -41,15 +41,15 @@ contains
       write(9,*) 'CELL_DATA',imax*jmax
       write(9,*) 'SCALARS density double'
       write(9,*) 'LOOKUP_TABLE default'
-      do j=1,jmax+1
-         do i=1,imax+1
+      do j=1,jmax
+         do i=1,imax
             write(9,*) Rho(i,j)
          end do
       end do
 
       write(9,*) 'VECTORS U double'
-      do j=1,jmax+1
-         do i=1,imax+1
+      do j=1,jmax
+         do i=1,imax
             write(9,*) u(i,j),v(i,j),0.0_PR
          end do
       end do

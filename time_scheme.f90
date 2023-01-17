@@ -9,14 +9,15 @@ module time_scheme
     
 contains
 
-    subroutine time_step(Rho,u,v,xm,ym,t,k,dt)
+    subroutine time_step(Rho,u,v,xm,ym,t,k,dt,sgm)
 
         real(PR), dimension(0:imax+1,0:jmax+1), intent(in) :: Rho, u, v
         real(PR), intent(in) :: xm(1:imax), ym(1:jmax)
         real(PR), intent(in) :: t
         integer, intent(in) :: k
         real(PR), intent(out) :: dt
-        real(PR), dimension(1:imax,1:jmax) :: sgm
+        real(PR), dimension(1:imax,1:jmax), intent(out) :: sgm
+        real(PR), dimension(0:imax+1,0:jmax+1,1:3) :: Un
         real(PR) :: be, dK, sigmaK, PP
         integer :: i, j
 
@@ -29,7 +30,10 @@ contains
 
             do i = 1, imax
 
-                sgm = compute_sigma(Rho(i,j),xm(i),ym(j),t,k)
+                Un(i,j,1) = Rho(i,j)
+                Un(i,j,2) = Rho(i,j)*u(i,j)
+                Un(i,j,3) = Rho(i,j)*v(i,j)
+                sgm(i,j) = compute_sigma(Rho(i,j),xm(i),ym(j),t,k)
 
             end do
 
@@ -38,7 +42,7 @@ contains
         sigmaK = maxval(sgm)
 
         dt = CFL * dK / (4._PR * be &
-           & + sigmaK*dK) 
+           & + sigmaK*dK)
 
     end subroutine time_step
 

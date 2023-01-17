@@ -2,14 +2,49 @@ module parameters
 
     implicit none
     
-    character(3), parameter :: case = 'one' ! one := First test case : convergence to a manufactured solution
-                                            ! two := Second test case : convergence to the diffusive limit
-                                            ! thr := Blast with friction
-    integer, parameter :: PR = 4 ! Simple precision (4) or Double precision (8)
-    real(PR), parameter :: PI = 4._PR*atan(1._PR), tf = 1._PR
-    real(PR), public :: gamma = 1.4_PR
+    character(3) :: case    ! one := First test case : convergence to a manufactured solution
+                            ! two := Second test case : convergence to the diffusive limit
+                            ! thr := Blast with friction
+
+    integer, parameter :: PR = 4
+    real(PR), parameter :: PI = 4._PR*atan(1._PR)
+    real(PR) :: tf
+    real(PR), public :: gamma
     real(PR), public :: theta_e
-    integer, parameter :: imax = 100, jmax = 100, pas_affichage = 5000
-    real(PR), parameter :: Lx = 1._PR, Ly = 1._PR, dx = Lx/imax, dy = Ly/jmax, CFL = 0.6_PR
+    integer :: imax, jmax, pas_affichage, kms
+    real(PR) :: Lx, Ly, dx, dy, CFL
+
+contains
+
+    subroutine read_params()
+
+        open(1,file = 'params.dat')
+        read(1,*) case
+        print*, case
+        read(1,*) tf
+        print*, tf
+        read(1,*) gamma
+        print*, gamma
+        read(1,*) imax
+        print*, imax
+        read(1,*) jmax
+        print*, jmax
+        read(1,*) pas_affichage
+        print*, pas_affichage
+        read(1,*) Lx
+        print*, Lx
+        read(1,*) Ly
+        print*, Ly
+        read(1,*) CFL
+        print*, CFL
+        read(1,*) kms
+        print*, kms
+        dx = Lx/imax
+        print*, dx
+        dy = Ly/jmax
+        print*, dy
+        
+    end subroutine read_params
+
     
 end module parameters

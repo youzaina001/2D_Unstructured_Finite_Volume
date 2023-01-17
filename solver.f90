@@ -15,13 +15,17 @@ contains
         real(PR) :: n_j_to_jp1(1:2), n_j_to_jm1(1:2)
         integer :: i, j
 
-        n_i_to_im1 = (/-1,0/)
-        n_i_to_ip1 = (/1,0/)
-        n_j_to_jm1 = (/0,-1/)
-        n_j_to_jp1 = (/0,1/)
+        n_i_to_im1(1) = -1._PR
+        n_i_to_im1(2) = 0._PR
+        n_i_to_ip1(1) = 1._PR
+        n_i_to_ip1(2) = 0._PR
+        n_j_to_jm1(1) = 0._PR
+        n_j_to_jm1(2) = -1._PR
+        n_j_to_jp1(1) = 0._PR
+        n_j_to_jp1(2) = 1._PR
 
-        phi = -(1._PR/dx) * (Rusanov(Uk,Ur,n_i_to_ip1) - Rusanov(Ul,Uk,n_i_to_im1)) &
-                   & -(1._PR/dy) * (Rusanov(Uk,Ut,n_j_to_jp1) - Rusanov(Ub,Uk,n_j_to_jm1))
+        phi = -(1._PR/dx) * (Rusanov(Uk,Ur,n_i_to_ip1) + Rusanov(Ul,Uk,n_i_to_im1)) &
+                   & -(1._PR/dy) * (Rusanov(Uk,Ut,n_j_to_jp1) + Rusanov(Ub,Uk,n_j_to_jm1))
 
     end subroutine spatial_discretization
 
