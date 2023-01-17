@@ -9,35 +9,22 @@ module time_scheme
     
 contains
 
-    subroutine time_step(Rho,u,v,xm,ym,t,k,dt,sgm)
+    subroutine time_step(Rho,u,v,xm,ym,PRS,sgm,k,dt)
 
         real(PR), dimension(0:imax+1,0:jmax+1), intent(in) :: Rho, u, v
+        real(PR), dimension(1:imax,1:jmax), intent(in) :: sgm
+        real(PR), dimension(0:imax+1,0:jmax+1), intent(in) :: PRS
         real(PR), intent(in) :: xm(1:imax), ym(1:jmax)
-        real(PR), intent(in) :: t
         integer, intent(in) :: k
         real(PR), intent(out) :: dt
-        real(PR), dimension(1:imax,1:jmax), intent(out) :: sgm
-        real(PR), dimension(0:imax+1,0:jmax+1,1:3) :: Un
         real(PR) :: be, dK, sigmaK, PP
         integer :: i, j
 
         ! Initialisation
-        PP = pressure_prime(maxval(Rho))
+        PP = maxval(PRS)
+        print*, "Pressure", PP
         be = max(maxval(abs(u)+sqrt(PP)),maxval(abs(v)+sqrt(PP)))
         dK = dx*dy/2._PR*(dx+dy)
-
-        do j = 1, jmax
-
-            do i = 1, imax
-
-                Un(i,j,1) = Rho(i,j)
-                Un(i,j,2) = Rho(i,j)*u(i,j)
-                Un(i,j,3) = Rho(i,j)*v(i,j)
-                sgm(i,j) = compute_sigma(Rho(i,j),xm(i),ym(j),t,k)
-
-            end do
-
-        end do
 
         sigmaK = maxval(sgm)
 
@@ -46,12 +33,13 @@ contains
 
     end subroutine time_step
 
-    subroutine explicit_euler(Un,t,dt,kms,xm,ym,Unp1)
+    subroutine explicit_euler(Un,t,dt,kms,sigma,Unp1)
 
         integer, intent(in) :: kms 
-        real(PR), intent(in) :: Un(0:imax+1,0:jmax+1,1:3), xm(1:imax), ym(1:jmax), t, dt
-        real(PR), intent(out) ::  Unp1(0:imax+1,0:jmax+1,1:3)
-        real(PR) :: Sn(0:imax+1,0:jmax+1,1:3), phi(0:imax+1,0:jmax+1,1:3), sigma(0:imax+1,0:jmax+1)
+        real(PR), intent(in) :: Un(0:imax+1,0:jmax+1,1:3), sigma(1:imax,1:jmax)
+        real(PR), intent(in) :: t, dt
+        real(PR), intent(out) ::  Unp1(1:imax,1:jmax,1:3)
+        real(PR) :: Sn(1:imax,1:jmax,1:3), phi(1:imax,1:jmax,1:3)
         integer :: i, j
 
         do j = 1, jmax
@@ -60,7 +48,6 @@ contains
    
                 call spatial_discretization(Un(i,j,1:3),Un(i-1,j,1:3),Un(i+1,j,1:3),Un(i,j+1,1:3),Un(i,j-1,1:3),phi(i,j,1:3))
                 call source_term(Un(i,j,1:3),Sn(i,j,1:3))
-                sigma(i,j) = compute_sigma(Un(i,j,1),xm(i),ym(j),t,kms)
                 Unp1(i,j,1:3) = Un(i,j,1:3) + dt * phi(i,j,1:3) + dt * sigma(i,j) * Sn(i,j,1:3)
                
             end do
