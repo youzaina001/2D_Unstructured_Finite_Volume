@@ -3,7 +3,7 @@
 1.4          !!$ gamma
 100          !!$ imax
 100          !!$ jmax
-500          !!$ Frequence d ecriture de la solution
+10000          !!$ Frequence d ecriture de la solution
 1.           !!$ Lx
 1.           !!$ Ly
 0.6          !!$ CFL

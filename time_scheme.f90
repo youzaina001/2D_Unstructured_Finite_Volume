@@ -22,7 +22,6 @@ contains
 
         ! Initialisation
         PP = maxval(PRS)
-        print*, "Pressure", PP
         be = max(maxval(abs(u)+sqrt(PP)),maxval(abs(v)+sqrt(PP)))
         dK = dx*dy/2._PR*(dx+dy)
 

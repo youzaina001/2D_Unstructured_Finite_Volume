@@ -16,7 +16,7 @@ program main
    ! Déclaration des variables
    integer :: i, j, k, n, iteration
    real(PR), dimension(:), allocatable :: x, y, xm, ym
-   real(PR), dimension(:,:), allocatable :: Rho, u, v, PRS
+   real(PR), dimension(:,:), allocatable :: Rho, Rho_ex, u, v, PRS
    real(PR), dimension(:,:), allocatable :: Rhop1, up1, vp1, sigma
    real(PR), dimension(:,:,:), allocatable :: Un, Unp1, Sn, phi
    real(PR) :: t0, t, dt
@@ -49,6 +49,7 @@ program main
 
    ! Allocation des vecteurs pour la solution
    allocate(Rho(0:imax+1,0:jmax+1))
+   allocate(Rho_ex(0:imax+1,0:jmax+1))
    allocate(u(0:imax+1,0:jmax+1))
    allocate(v(0:imax+1,0:jmax+1))
    allocate(PRS(0:imax+1,0:jmax+1))
@@ -79,6 +80,13 @@ program main
       call Neumann(Rho,u,v)
    else if (case == 'thr') then
       call Wall(Rho,u,v)
+   end if
+
+   ! Stockage de la solution exacte
+   if (case == 'one') then
+
+      Rho_ex = Rho
+      
    end if
 
    ! Remplissange des vecteurs Un et Unp1
@@ -171,13 +179,17 @@ program main
 
    end do
 
-   ! Calcul des erreurs L1 et L2
-   !l1error = L1_Error(Rho_ex,Rho)
-   !l2error = L2_Error(Rho_ex,Rho)
-   !write(25,*) l1error, l2error
+   if (case == 'one') then
+
+      ! Calcul des erreurs L1 et L2
+      l1error = L1_Error(Rho_ex,Rho)
+      l2error = L2_Error(Rho_ex,Rho)
+      write(25,*) l1error, l2error, imax, jmax, kms
+      
+   end if
 
    deallocate(x,y,xm,ym)
-   deallocate(Rho,u,v,PRS)
+   deallocate(Rho,Rho_ex,u,v,PRS)
    deallocate(sigma,Rhop1,up1,vp1)
    deallocate(Un,Sn,Unp1,phi)
   

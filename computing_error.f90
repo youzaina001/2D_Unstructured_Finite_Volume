@@ -19,13 +19,11 @@ contains
 
         ! Computing L1 error on density
         do j = 1, jmax
-
             do i = 1, imax
 
                 SumL1 = SumL1 + abs(Rho_ex(i,j) - Rho_num(i,j))
                 
             end do
-            
         end do
 
         l1error = SumL1
@@ -44,13 +42,11 @@ contains
 
         ! Computing L1 error on density
         do j = 1, jmax
-
             do i = 1, imax
 
                 SumL2 = SumL2 + (Rho_ex(i,j) - Rho_num(i,j))
                 
-            end do
-            
+            end do 
         end do
 
         l2error = sqrt(SumL2)
