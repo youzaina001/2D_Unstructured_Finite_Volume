@@ -23,9 +23,9 @@ contains
         ! Initialisation
         PP = maxval(PRS)
         be = max(maxval(abs(u)+sqrt(PP)),maxval(abs(v)+sqrt(PP)))
-        dK = dx*dy/2._PR*(dx+dy)
+        dK = (dx*dy)/(2._PR*(dx+dy))
 
-        sigmaK = maxval(sgm)
+        sigmaK = minval(sgm)
 
         dt = CFL * dK / (4._PR * be &
            & + sigmaK*dK)
@@ -41,8 +41,10 @@ contains
         real(PR) :: Sn(1:imax,1:jmax,1:3), phi(1:imax,1:jmax,1:3)
         integer :: i, j
 
+        !$omp parallel do private(i, j)
         do j = 1, jmax
 
+            
             do i = 1, imax
    
                 call spatial_discretization(Un(i,j,1:3),Un(i-1,j,1:3),Un(i+1,j,1:3),Un(i,j+1,1:3),Un(i,j-1,1:3),phi(i,j,1:3))

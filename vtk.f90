@@ -6,13 +6,13 @@ module vtk
     
 contains
 
-   subroutine sortie_vtk(numero,imax,jmax,x,y,Rho,u,v)
+   subroutine sortie_vtk(numero,imax,jmax,x,y,Rho,u,v,PRS)
 
       character(100) :: numero  
       integer, intent(in) :: imax, jmax
       real(PR), dimension(0:imax), intent(in) :: x
       real(PR), dimension(0:jmax), intent(in) :: y
-      real(PR), dimension(1:imax,1:jmax), intent(in) :: Rho, u, v
+      real(PR), dimension(1:imax,1:jmax), intent(in) :: Rho, u, v, PRS
 
       integer :: i, j
 
@@ -44,6 +44,14 @@ contains
       do j=1,jmax
          do i=1,imax
             write(9,*) Rho(i,j)
+         end do
+      end do
+
+      write(9,*) 'SCALARS p double'
+      write(9,*) 'LOOKUP_TABLE default'
+      do j=1,jmax
+         do i=1,imax
+            write(9,*) PRS(i,j)
          end do
       end do
 

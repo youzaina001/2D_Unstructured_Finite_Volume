@@ -68,7 +68,7 @@ contains
             do j = 1, jmax
                 do i = 1, imax
 
-                    if (((x(i)-0.5_PR)**2 + (y(j)-0.4_PR)**4) <= 0.3_PR**2) then
+                    if (((x(i)-0.5_PR)**2 + (y(j)-0.4_PR)**2) <= 0.3_PR**2) then
 
                         Rho(i,j) = 5._PR
                         u(i,j) = 0._PR

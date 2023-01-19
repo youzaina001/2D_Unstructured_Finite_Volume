@@ -63,7 +63,7 @@ contains
 
         else if (case == 'thr') then
 
-            sigma = (Rho**3)/25._PR
+            sigma = 5._PR*((0.2_PR*Rho)**3)
             
         end if
         
@@ -112,17 +112,22 @@ contains
         real(PR), intent(in) :: PPk, PPl
         real(PR) :: Rhok, Rhol, uxk, uxl, vyk, vyl
         real(PR) :: cuk, cul, cvk, cvl
+        real(PR) :: cukk, cull, cvkk, cvll
         real(PR) :: c
 
         call conservative_to_non_conservative(Uk,Rhok,uxk,vyk)
         call conservative_to_non_conservative(Ul,Rhol,uxl,vyl)
 
-        cuk = uxk + sqrt(PPk)
-        cul = uxl + sqrt(PPl)
-        cvk = vyk + sqrt(PPk)
-        cvl = vyl + sqrt(PPl)
+        cuk = abs(uxk + sqrt(abs(PPk)))
+        cul = abs(uxl + sqrt(abs(PPl)))
+        cvk = abs(vyk + sqrt(abs(PPk)))
+        cvl = abs(vyl + sqrt(abs(PPl)))
+        cukk = abs(uxk - sqrt(abs(PPk)))
+        cull = abs(uxl - sqrt(abs(PPl)))
+        cvkk = abs(vyk - sqrt(abs(PPk)))
+        cvll = abs(vyl - sqrt(abs(PPl)))
 
-        c = max(cuk,cul,cvk,cvl)
+        c = max(cuk,cul,cvk,cvl,cukk,cull,cvkk,cvll,abs(uxk),abs(uxl),abs(vyk),abs(vyl))
         
     end function max_celerity
 

@@ -26,7 +26,7 @@ contains
             end do
         end do
 
-        l1error = SumL1
+        l1error = SumL1/(imax*jmax)
 
     end function L1_Error
 
@@ -40,17 +40,40 @@ contains
         ! Initialisation
         SumL2 = 0
 
-        ! Computing L1 error on density
+        ! Computing L2 error on density
         do j = 1, jmax
             do i = 1, imax
 
-                SumL2 = SumL2 + (Rho_ex(i,j) - Rho_num(i,j))
+                SumL2 = SumL2 + (Rho_ex(i,j) - Rho_num(i,j))**2
                 
             end do 
         end do
 
-        l2error = sqrt(SumL2)
+        l2error = sqrt(SumL2/(imax*jmax))
 
     end function L2_Error
+
+    function Linf_Error(Rho_ex,Rho_num) result(linferror)
+
+        real(PR), intent(in) :: Rho_ex(0:imax+1,0:jmax+1), Rho_num(0:imax+1,0:jmax+1)
+        real(PR) :: linferror
+        real(PR) :: SumLinf
+        integer :: i, j
+
+        ! Initialisation
+        SumLinf = 0
+
+        ! Computing Linf error on density
+        do j = 1, jmax
+            do i = 1, imax
+
+                SumLinf = max(SumLinf,abs(Rho_ex(i,j) - Rho_num(i,j)))
+                
+            end do 
+        end do
+
+        linferror = SumLinf
+
+    end function Linf_Error
     
 end module computing_error
