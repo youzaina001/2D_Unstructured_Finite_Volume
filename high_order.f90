@@ -1,7 +1,7 @@
 module high_order
 
   use parameters
-  !use lapack
+  use flux
 
   implicit none
   
@@ -170,27 +170,20 @@ contains
       
     end subroutine polyomial_reconstruction_cell_IJ
 
-    !--------------------------------------------------------------------!
-    !> @brief
-    !> Check if the value of the solution on a cell is physically admissible.
-    !>
-    !> @param[in] U_K conservative variables
-    !>
-    !> @author Florian Blachère
-    !--------------------------------------------------------------------!
-    !>function IsPhysicallyAdmissible(U_K)
-    !>  real(PR), dimension(:), intent(in) :: U_K
+    function PAD(Uk)
 
-    !>  logical :: IsPhysicallyAdmissible
+      real(PR), dimension(1:3), intent(in) :: Uk
 
-    !>  if (U_K(1) < 0._PR) then
-    !>    IsPhysicallyAdmissible = .FALSE.
-    !>  else if (compute_pressure(U_K) < 0._PR) then
-    !>    IsPhysicallyAdmissible = .FALSE.
-    !>  else
-    !>    IsPhysicallyAdmissible = .TRUE.
-    !>  end if
+      logical :: PAD
 
-    !>end function IsPhysicallyAdmissible
-  
+      if (Uk(1) < 0._PR) then
+        PAD = .FALSE.
+      else if (pressure(Uk(1)) < 0._PR) then
+        PAD = .FALSE.
+      else
+        PAD = .TRUE.
+      end if
+
+    end function PAD
+   
 end module high_order

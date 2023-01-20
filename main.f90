@@ -16,7 +16,7 @@ program main
    ! Déclaration des variables
    integer :: i, j, k, n, iteration
    real(PR), dimension(:), allocatable :: x, y, xm, ym
-   real(PR), dimension(:,:), allocatable :: Rho, Rho_ex, u, v, PRS, PRSP
+   real(PR), dimension(:,:), allocatable :: Rho, Rho_ex, u, v, PRS, PPRS
    real(PR), dimension(:,:), allocatable :: Rhop1, up1, vp1, sigma
    real(PR), dimension(:,:,:), allocatable :: Un, Unp1, Sn, phi
    real(PR) :: t0, t, dt
@@ -25,7 +25,7 @@ program main
 
    ! Creating the file in which we store the L1 and L2 errors for different meshes / Convergence speeds
    open(25, file='Output/Convergence_errors.dat', access = 'append')
-   open(30, file='Output/Convergence_speeds.dat', access = 'append')
+   open(30, file='Output/Convergence_speeds.dat')
 
 
    ! Initialisation
@@ -52,13 +52,13 @@ program main
    allocate(Rhop1(0:imax+1,0:jmax+1));allocate(up1(0:imax+1,0:jmax+1))
    allocate(vp1(0:imax+1,0:jmax+1));allocate(Un(0:imax+1,0:jmax+1,1:3))
    allocate(Sn(1:imax,1:jmax,1:3));allocate(Unp1(1:imax,1:jmax,1:3))
-   allocate(phi(1:imax,1:jmax,1:3));allocate(PRSP(0:imax+1,0:jmax+1))
+   allocate(phi(1:imax,1:jmax,1:3));allocate(PPRS(0:imax+1,0:jmax+1))
 
    ! Chargement du maillage 2D cartésien
    call load_mesh(x,y,xm,ym)
 
    ! Initialisation
-   Rho = 0._PR; u = 0._PR; v = 0._PR; PRS = 0._PR; PRSP = 0._PR
+   Rho = 0._PR; u = 0._PR; v = 0._PR; PRS = 0._PR; PPRS = 0._PR
    Rhop1 = 0._PR; up1 = 0._PR; vp1 = 0._PR; sigma = 0._PR
    Un = 0._PR; Unp1 = 0._PR; phi = 0._PR
 
@@ -98,38 +98,53 @@ program main
    write(num,*) 112233445
    call sortie_vtk(num,imax,jmax,x,y,Rho(1:imax,1:jmax),u(1:imax,1:jmax),v(1:imax,1:jmax),PRS(1:imax,1:jmax))
 
+   ! Computing sigma
+   !$omp parallel do private(i, j)
+   do j = 1, jmax
+      do i = 1, imax
+         sigma(i,j) = compute_sigma(Rho(i,j),xm(i),ym(j),t0,kms)
+      end do
+   end do
+   !if (minval(sigma) <= 0) then
+   !   stop
+   !end if
+
+   ! Computing pressure
+   !$omp parallel do private(i, j)
+   do j = 0, jmax+1
+      do i = 0, imax+1
+         PRS(i,j) = pressure(Rho(i,j))
+         PPRS(i,j) = pressure_prime(Rho(i,j))
+      end do
+   end do
+   !if (minval(PRS) <= 0) then
+   !   stop
+   !end if
+
    ! Boucle en temps
    do while (t <= tf)
-
-      ! Computing sigma
-      !$omp parallel do private(i, j)
-      do j = 1, jmax
-         do i = 1, imax
-            sigma(i,j) = compute_sigma(Rho(i,j),xm(i),ym(j),t,kms)
-         end do
-      end do
-
-      ! Computing pressure
-      !$omp parallel do private(i, j)
-      do j = 0, jmax+1
-         do i = 0, imax+1
-            PRS(i,j) = pressure(Rho(i,j))
-         end do
-      end do
 
       ! Computing time step
       call time_step(Rho,u,v,xm,ym,PRS,sigma,kms,dt)
       print*, "The time step is equal to:", dt, "."
 
       ! Paramètre thete_e permettant la limitation
-      print*, "La valeur de sigma est:", maxval(sigma)
-      theta_e = 1._PR/(1._PR + maxval(sigma)*t)
+      print*, "La valeur de theta_e est:", theta_e
 
       ! Solution using an explicit Euler solver or RK3 scheme
-      call explicit_euler(Un,t,dt,kms,sigma,Unp1)
+      !call RK3(Un,t,dt,kms,sigma,Unp1)
+      call explicit_euler(Un,PRS,PPRS,t,dt,kms,sigma,Unp1)
 
-      ! Mise a jour des solutions
-      Un(1:imax,1:jmax,1:3) = Unp1(1:imax,1:jmax,1:3)
+      do j = 1, jmax
+
+         do i = 1, imax
+
+            ! Extracting non-conservative variables
+            call conservative_to_non_conservative(Unp1(i,j,1:3),Rho(i,j),u(i,j),v(i,j))
+            
+         end do
+         
+      end do
 
       ! Boundary conditions
       if (case == 'one') then
@@ -140,15 +155,24 @@ program main
          call Wall(Rho,u,v)
       end if
 
+      ! Mise a jour des solutions
+      Un(1:imax,1:jmax,1:3) = Unp1
+
+      ! Updating sigma
+      !$omp parallel do private(i, j)
       do j = 1, jmax
-
          do i = 1, imax
-
-            ! Extracting non-conservative variables
-            call conservative_to_non_conservative(Un(i,j,1:3),Rho(i,j),u(i,j),v(i,j))
-            
+            sigma(i,j) = compute_sigma(Rho(i,j),xm(i),ym(j),t,kms)
          end do
-         
+      end do
+
+      ! Updating pressure
+      !$omp parallel do private(i, j)
+      do j = 0, jmax+1
+         do i = 0, imax+1
+            PRS(i,j) = pressure(Rho(i,j))
+            PPRS(i,j) = pressure_prime(Rho(i,j))
+         end do
       end do
 
       if (mod(iteration,pas_affichage) == 0) then  
@@ -173,7 +197,7 @@ program main
 
       if (case == 'two') then
          ! Calcul des erreurs L2 et Linf du 2nd cas test
-         write(30,*) L2_Error(Rho_ex,Rho), Linf_Error(Rho_ex,Rho), 1._PR/theta_e, tf
+         write(30,*) L2_Error(Rho_ex,Rho), Linf_Error(Rho_ex,Rho), (1._PR + 100._PR*(t-dt)), tf, imax, jmax
       end if
 
    end do

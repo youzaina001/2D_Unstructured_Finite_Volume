@@ -1,10 +1,10 @@
-'one'        !!$ Choix du cas test (one, two or thr)
-1.00         !!$ Temps final
-1.4          !!$ gamma
-150          !!$ imax
-150          !!$ jmax
-50          !!$ Frequence d ecriture de la solution
-1.00         !!$ Lx
-1.00         !!$ Ly
-0.6          !!$ CFL
-20           !!$ kms : entier relatif a la solution manufacturee du 1er cas test
+'two'            !!$ Choix du cas test (one, two or thr)
+1000.            !!$ Temps final
+1.4              !!$ gamma
+600              !!$ imax
+600              !!$ jmax
+1000             !!$ Frequence d ecriture de la solution
+100.             !!$ Lx
+100.             !!$ Ly
+0.6              !!$ CFL
+640              !!$ kms : entier relatif a la solution manufacturee du 1er cas test

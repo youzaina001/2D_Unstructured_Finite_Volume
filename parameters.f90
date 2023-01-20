@@ -6,7 +6,7 @@ module parameters
                             ! two := Second test case : convergence to the diffusive limit
                             ! thr := Blast with friction
 
-    integer, parameter :: PR = 4
+    integer, parameter :: PR = selected_real_kind(15,70)
     real(PR), parameter :: PI = 4._PR*atan(1._PR)
     real(PR) :: tf
     real(PR), public :: gamma

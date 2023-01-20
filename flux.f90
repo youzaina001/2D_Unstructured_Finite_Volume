@@ -83,26 +83,24 @@ contains
         real(PR), intent(in) :: Rho
         real(PR) :: PP
 
-        PP = (gamma - 1)*Rho**(gamma - 1)
+        PP = (gamma - 1._PR)*(Rho**(gamma - 1._PR))
         
     end function pressure_prime
 
-    function Exact_flux(U) result(FU)
+    function Exact_flux(U,P) result(FU)
 
-        real(PR), intent(in) :: U(1:3)
+        real(PR), intent(in) :: U(1:3), P
         real(PR) :: FU(1:3,1:2)
-        real(PR) :: Rho, ux, vy, P
+        real(PR) :: Rho, ux, vy
 
         call conservative_to_non_conservative(U,Rho,ux,vy)
 
-        P = pressure(Rho)
-
         FU(1,1) = Rho * ux
         FU(1,2) = Rho * vy
-        FU(2,1) = Rho * ux**2 + P 
+        FU(2,1) = Rho * ux * ux + P 
         FU(2,2) = Rho * ux * vy
         FU(3,1) = Rho * ux * vy
-        FU(3,2) = Rho * vy**2 + P
+        FU(3,2) = Rho * vy * vy + P
         
     end function Exact_flux
 
@@ -118,33 +116,31 @@ contains
         call conservative_to_non_conservative(Uk,Rhok,uxk,vyk)
         call conservative_to_non_conservative(Ul,Rhol,uxl,vyl)
 
-        cuk = abs(uxk + sqrt(abs(PPk)))
-        cul = abs(uxl + sqrt(abs(PPl)))
-        cvk = abs(vyk + sqrt(abs(PPk)))
-        cvl = abs(vyl + sqrt(abs(PPl)))
-        cukk = abs(uxk - sqrt(abs(PPk)))
-        cull = abs(uxl - sqrt(abs(PPl)))
-        cvkk = abs(vyk - sqrt(abs(PPk)))
-        cvll = abs(vyl - sqrt(abs(PPl)))
+        cuk = abs(uxk + sqrt(PPk))
+        cul = abs(uxl + sqrt(PPl))
+        cvk = abs(vyk + sqrt(PPk))
+        cvl = abs(vyl + sqrt(PPl))
+        cukk = abs(uxk - sqrt(PPk))
+        cull = abs(uxl - sqrt(PPl))
+        cvkk = abs(vyk - sqrt(PPk))
+        cvll = abs(vyl - sqrt(PPl))
 
         c = max(cuk,cul,cvk,cvl,cukk,cull,cvkk,cvll,abs(uxk),abs(uxl),abs(vyk),abs(vyl))
         
     end function max_celerity
 
-    function Rusanov(Uk,Ul,nKe) result(Fe) ! nKe : normale
+    function Rusanov(Uk,Ul,Pk,Pl,PPk,PPl,nKe) result(Fe) ! nKe : normale
 
         real(PR), intent(in) :: Uk(1:3), Ul(1:3)
+        real(PR), intent(in) :: Pk, Pl, PPk, PPl
         real(PR), intent(in) :: nKe(1:2)
         real(PR) :: FUk(1:3,1:2), FUl(1:3,1:2)
         real(PR) :: Fe(1:3)
         real(PR) :: Rho1, u1, v1, Rho2, u2, v2
-        real(PR) :: PPk, PPl
         real(PR) :: be
 
-        FUk = Exact_flux(Uk)
-        Ful = Exact_flux(Ul)
-        PPk = pressure_prime(Uk(1))
-        PPl = pressure_prime(Ul(1))
+        FUk = Exact_flux(Uk,Pk)
+        Ful = Exact_flux(Ul,Pl)
 
         call conservative_to_non_conservative(Uk,Rho1,u1,v1)
         call conservative_to_non_conservative(Ul,Rho2,u2,v2)
