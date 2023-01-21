@@ -57,7 +57,7 @@ contains
 
         real(PR), intent(in) :: Rho_ex(0:imax+1,0:jmax+1), Rho_num(0:imax+1,0:jmax+1)
         real(PR) :: linferror
-        real(PR) :: SumLinf
+        real(PR) :: SumLinf(1:imax,1:jmax)
         integer :: i, j
 
         ! Initialisation
@@ -67,12 +67,12 @@ contains
         do j = 1, jmax
             do i = 1, imax
 
-                SumLinf = max(SumLinf,abs(Rho_ex(i,j) - Rho_num(i,j)))
+                SumLinf(i,j) = abs(Rho_ex(i,j) - Rho_num(i,j))
                 
             end do 
         end do
 
-        linferror = SumLinf
+        linferror = maxval(SumLinf)
 
     end function Linf_Error
     

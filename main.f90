@@ -140,7 +140,7 @@ program main
          do i = 1, imax
 
             ! Extracting non-conservative variables
-            call conservative_to_non_conservative(Unp1(i,j,1:3),Rho(i,j),u(i,j),v(i,j))
+            call conservative_to_non_conservative(Unp1(i,j,1:3),Rhop1(i,j),up1(i,j),vp1(i,j))
             
          end do
          
@@ -148,15 +148,18 @@ program main
 
       ! Boundary conditions
       if (case == 'one') then
-         call Dirichlet(Rho,u,v,x,y,t,kms)
+         call Dirichlet(Rhop1,up1,vp1,x,y,t,kms)
       else if (case == 'two') then
-         call Neumann(Rho,u,v)
+         call Neumann(Rhop1,up1,vp1)
       else if (case == 'thr') then
-         call Wall(Rho,u,v)
+         call Wall(Rhop1,up1,vp1)
       end if
 
       ! Mise a jour des solutions
       Un(1:imax,1:jmax,1:3) = Unp1
+      Rho = Rhop1
+      u = up1
+      v = vp1
 
       ! Updating sigma
       !$omp parallel do private(i, j)
@@ -197,7 +200,7 @@ program main
 
       if (case == 'two') then
          ! Calcul des erreurs L2 et Linf du 2nd cas test
-         write(30,*) L2_Error(Rho_ex,Rho), Linf_Error(Rho_ex,Rho), (1._PR + 100._PR*(t-dt)), tf, imax, jmax
+         write(30,*) L2_Error(Rho_ex,Rho), Linf_Error(Rho_ex,Rho), (1._PR + maxval(sigma)*(t-dt)), tf, imax, jmax
       end if
 
    end do

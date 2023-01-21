@@ -59,7 +59,7 @@ contains
 
         else if (case == 'two') then
 
-            sigma = 100._PR
+            sigma = 50._PR
 
         else if (case == 'thr') then
 
@@ -74,7 +74,7 @@ contains
         real(PR), intent(in) :: Rho
         real(PR) :: P
 
-        P = Rho**gamma
+        P = (Rho)**gamma
         
     end function pressure
 
@@ -116,14 +116,14 @@ contains
         call conservative_to_non_conservative(Uk,Rhok,uxk,vyk)
         call conservative_to_non_conservative(Ul,Rhol,uxl,vyl)
 
-        cuk = abs(uxk + sqrt(PPk))
-        cul = abs(uxl + sqrt(PPl))
-        cvk = abs(vyk + sqrt(PPk))
-        cvl = abs(vyl + sqrt(PPl))
-        cukk = abs(uxk - sqrt(PPk))
-        cull = abs(uxl - sqrt(PPl))
-        cvkk = abs(vyk - sqrt(PPk))
-        cvll = abs(vyl - sqrt(PPl))
+        cuk = abs(uxk) + sqrt(abs(PPk))
+        cul = abs(uxl) + sqrt(abs(PPl))
+        cvk = abs(vyk) + sqrt(abs(PPk))
+        cvl = abs(vyl) + sqrt(abs(PPl))
+        cukk = abs(uxk) - sqrt(abs(PPk))
+        cull = abs(uxl) - sqrt(abs(PPl))
+        cvkk = abs(vyk) - sqrt(abs(PPk))
+        cvll = abs(vyl) - sqrt(abs(PPl))
 
         c = max(cuk,cul,cvk,cvl,cukk,cull,cvkk,cvll,abs(uxk),abs(uxl),abs(vyk),abs(vyl))
         

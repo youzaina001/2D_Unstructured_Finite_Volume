@@ -17,12 +17,11 @@ contains
         real(PR), intent(in) :: xm(1:imax), ym(1:jmax)
         integer, intent(in) :: k
         real(PR), intent(out) :: dt
-        real(PR) :: be, dK, sigmaK, PP
+        real(PR) :: be, dK, sigmaK
         integer :: i, j
 
         ! Initialisation
-        PP = maxval(PRS)
-        be = max(maxval(abs(u+sqrt(PP))),maxval(abs(v+sqrt(PP))))
+        be = max(maxval(abs(u)+sqrt(abs(PRS))),maxval(abs(v)+sqrt(abs(PRS))))
         dK = (dx*dy)/(2._PR*(dx+dy))
 
         sigmaK = minval(sgm)
@@ -47,7 +46,7 @@ contains
             
             do i = 1, imax
    
-                theta_e = 1._PR/(1._PR + sigma(i,j)*t)
+                theta_e = 1._PR!/(1._PR + sigma(i,j)*t)
                 call spatial_discretization(Un(i,j,1:3),Un(i-1,j,1:3),Un(i+1,j,1:3),Un(i,j+1,1:3),Un(i,j-1,1:3), &
                 & PRS(i,j),PRS(i-1,j),PRS(i+1,j),PRS(i,j+1),PRS(i,j-1),PPRS(i,j),PPRS(i-1,j), &
                 & PPRS(i+1,j),PPRS(i,j+1),PPRS(i,j-1),phi(i,j,1:3))
