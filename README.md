@@ -1,6 +1,6 @@
 2D Unstructured Finite Volume Solver
 
-This project provides a Fortran implementation for solving 2D unstructured finite volume problems. It includes functionalities for mesh generation, boundary condition implementation, flux computation, and error analysis, among other solver routines.
+This project provides a Fortran implementation for solving 2D unstructured finite volume problems based on the following research paper https://hal.science/hal-03157500v1. It includes functionalities for mesh generation, boundary condition implementation, flux computation, and error analysis, among other solver routines.
 
 *** Features ***
 
